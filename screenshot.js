@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
   // Navigate to the website
@@ -82,6 +82,21 @@ const puppeteer = require('puppeteer');
     }
   };
 
+  // Function to click the "Calculate" button
+  const clickCalculateButton = async () => {
+    try {
+      const calculateButton = await page.$('#calculate-btn button[ng-click="submitTask()"]:not(.ng-hide)');
+      if (calculateButton) {
+        await calculateButton.click();
+        console.log('Clicked the Calculate button');
+      } else {
+        console.error('Calculate button not found');
+      }
+    } catch (error) {
+      console.error('Failed to click the Calculate button:', error);
+    }
+  };
+
   // Input data for the Panels grid
   const panelsData = [
     ['600', '200', '2'],
@@ -104,8 +119,14 @@ const puppeteer = require('puppeteer');
   // Process the Stock sheets grid
   await processGrid('#stock-tiles-grid', stockSheetsData);
 
+  // Click the Calculate button
+  await clickCalculateButton();
+
+  // Wait for 1 minute
+  await new Promise(resolve => setTimeout(resolve, 30000));
+
   // Take a screenshot
-  await page.screenshot({ path: 'screenshot.png' });
+  await page.screenshot({ path: 'screenshot.png', fullPage: true });
 
   // Close the browser
   await browser.close();
