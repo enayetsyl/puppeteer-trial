@@ -4,6 +4,10 @@ const puppeteer = require('puppeteer');
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
+  // Set the viewport to the full screen size
+  const screenSize = { width: 1920, height: 1080 };
+  await page.setViewport(screenSize);
+
   // Navigate to the website
   await page.goto('https://www.cutlistoptimizer.com/', { waitUntil: 'networkidle2' });
 
@@ -13,7 +17,7 @@ const puppeteer = require('puppeteer');
 
   // Utility function to add a random delay between 1500ms and 3000ms
   const delay = () => {
-    const randomDelay = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    const randomDelay = Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
     return new Promise(resolve => setTimeout(resolve, randomDelay));
   };
 
@@ -30,33 +34,17 @@ const puppeteer = require('puppeteer');
         await delay(); // Wait for a random delay to ensure input is registered
 
         // Verify the value was entered correctly
-        const enteredText = await page.evaluate(cell => cell.textContent.trim(), cell);
+        const enteredText = await page.evaluate(cell => cell.value.trim(), cell);
         if (enteredText === text) {
           console.log(`Successfully entered ${text}`);
           break; // Exit loop if the correct value is entered
         } else {
           console.log(`Entered text "${enteredText}" does not match expected "${text}". Retrying...`);
-          await retryClearAndType(cell, text);
         }
       } catch (error) {
         console.log(`Attempt ${attempt + 1} failed to click and type. Retrying...`);
         await delay(); // Wait a bit before retrying with a random delay
       }
-    }
-  };
-
-  // Function to retry clearing and typing the text
-  const retryClearAndType = async (cell, text) => {
-    try {
-      // await cell.click(); // Click to focus the input field
-      await page.keyboard.down('Control');
-      await page.keyboard.press('a'); // Select all text
-      await page.keyboard.up('Control');
-      await page.keyboard.press('Backspace'); // Clear the input field
-      await page.keyboard.type(text); // Type the new value
-      await delay(); // Wait for a random delay to ensure input is registered
-    } catch (error) {
-      console.log(`Retry attempt failed. Retrying...`);
     }
   };
 
@@ -82,20 +70,44 @@ const puppeteer = require('puppeteer');
     }
   };
 
+  // Function to click the "Calculate" button
+  const clickCalculateButton = async () => {
+    try {
+      const calculateButton = await page.$('#calculate-btn button[ng-click="submitTask()"]:not(.ng-hide)');
+      if (calculateButton) {
+        await calculateButton.click();
+        console.log('Clicked the Calculate button');
+      } else {
+        console.error('Calculate button not found');
+      }
+    } catch (error) {
+      console.error('Failed to click the Calculate button:', error);
+    }
+  };
+
+  // Function to click the "Accept" button
+  const clickAcceptButton = async () => {
+    try {
+      const acceptButton = await page.$('button[ng-click="stopTask()"]:not(.ng-hide)');
+      if (acceptButton) {
+        await acceptButton.click();
+        console.log('Clicked the Accept button');
+      } else {
+        console.error('Accept button not found');
+      }
+    } catch (error) {
+      console.error('Failed to click the Accept button:', error);
+    }
+  };
+
   // Input data for the Panels grid
   const panelsData = [
-    ['600', '200', '2'],
-    ['650', '550', '3'],
-    ['100', '200', '1'],
-    ['200', '300', '4']
+    ['600', '200', '1']
   ];
 
   // Input data for the Stock sheets grid
   const stockSheetsData = [
-    ['1220', '2440', '5'],
-    ['610', '2440', '3'],
-    ['305', '2440', '2'],
-    ['1220', '1220', '1']
+    ['1220', '2440', '5']
   ];
 
   // Process the Panels grid
@@ -104,8 +116,44 @@ const puppeteer = require('puppeteer');
   // Process the Stock sheets grid
   await processGrid('#stock-tiles-grid', stockSheetsData);
 
-  // Take a screenshot
-  await page.screenshot({ path: 'screenshot.png' });
+  // Click the Calculate button
+  await clickCalculateButton();
+
+  // Wait for the login form to be visible
+  await page.waitForSelector('input[placeholder="Email"]', { visible: true });
+  await page.waitForSelector('input[placeholder="Password"]', { visible: true });
+
+  // Type the email and password
+  await clickAndType(await page.$('input[placeholder="Email"]'), 'Ssingh@365aitech.com');
+  await clickAndType(await page.$('input[placeholder="Password"]'), 'Password@123!');
+
+  // Click the Sign In button
+  await page.click('button[ng-click="login();"]');
+
+  // Wait for navigation to complete after login
+  // try {
+  //   await page.waitForNavigation({ waitUntil: 'networkidle2' });
+  // } catch (error) {
+  //   console.error('Navigation timed out:', error);
+  // }
+
+  // Click the Calculate button again after login
+  await clickCalculateButton();
+
+  // Wait for 10 seconds
+  await new Promise(resolve => setTimeout(resolve, 10000));
+
+  // Click the Accept button
+  await clickAcceptButton();
+
+  // Wait for 20 seconds
+  await new Promise(resolve => setTimeout(resolve, 20000));
+
+  // Take a full-page screenshot
+  const screenshotPath = 'full_screenshot.png';
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+
+  console.log(`Screenshot taken: ${screenshotPath}`);
 
   // Close the browser
   await browser.close();
