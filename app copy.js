@@ -27,7 +27,7 @@ app.get('/', (req, res) => {
 });
 
 // Define the Puppeteer function
-const runPuppeteer = async (panelsData, stockSheetsData, options) => {
+const runPuppeteer = async (panelsData, stockSheetsData) => {
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
 
@@ -162,16 +162,8 @@ const retryClearAndType = async (cell, text) => {
     }
   };
 
-  const setOptions = async (options) => {
-    if (options.cutThickness) {
-      const cutThicknessInput = await page.$('input[ng-model="cfg.cutThicknessInput"]');
-      await clickAndType(cutThicknessInput, options.cutThickness);
-    }
-  };
-
   await processGrid('#tiles-grid', panelsData);
   await processGrid('#stock-tiles-grid', stockSheetsData);
-  await setOptions(options);
   await clickGotItButton();
   await clickCalculateButton();
 
@@ -210,7 +202,7 @@ app.post('/design-data', async (req, res) => {
   console.log('panels', panels, stockSheet, options)
   console.log('req.body', req.body)
   try {
-    const cloudinaryLink = await runPuppeteer(panels, stockSheet, options);
+    // const cloudinaryLink = await runPuppeteer(panels, stockSheet);
     console.log('clu link', cloudinaryLink)
     res.status(200).json({
       yourDesignLink: cloudinaryLink
