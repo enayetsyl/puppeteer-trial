@@ -1,12 +1,4 @@
 const puppeteer = require('puppeteer');
-const cloudinary = require('cloudinary').v2;
-
-// Configure your Cloudinary credentials
-cloudinary.config({
-  cloud_name: 'dj3qabx11',
-  api_key: '533762782692462',
-  api_secret: 'YcvSAvEFsEu-rZyhKmLnI3bQ5KQ'
-});
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
@@ -14,6 +6,7 @@ cloudinary.config({
 
   // Set the viewport to the full screen size
   const screenSize = { width: 1920, height: 1080 };
+ 
 
   // Navigate to the website
   await page.goto('https://www.cutlistoptimizer.com/', { waitUntil: 'networkidle2' });
@@ -23,11 +16,13 @@ cloudinary.config({
   await page.waitForSelector('#stock-sheets-input');
 
   // Utility function to add a random delay between 1500ms and 3000ms
-  // const delay = () => {
-  //   console.log('delay function called')
-  //   // const randomDelay = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
-  //   // return new Promise(resolve => setTimeout(resolve, randomDelay));
-  // };
+  const delay = () => {
+    console.log('delay function called')
+    // const randomDelay = Math.floor(Math.random() * (1000 - 500 + 1)) + 500;
+    // return new Promise(resolve => setTimeout(resolve, randomDelay));
+  };
+
+
 
  // Function to click, clear, and type text into an input field
  const clickAndType = async (cell, text) => {
@@ -39,7 +34,7 @@ cloudinary.config({
       await page.keyboard.up('Control');
       await page.keyboard.press('Backspace'); // Clear the input field
       await page.keyboard.type(text); // Type the new value
-      // await delay(); // Wait for a random delay to ensure input is registered
+      await delay(); // Wait for a random delay to ensure input is registered
 
       // Verify the value was entered correctly
       const enteredText = await page.evaluate(cell => cell.textContent.trim(), cell);
@@ -52,7 +47,7 @@ cloudinary.config({
       }
     } catch (error) {
       console.log(`Attempt ${attempt + 1} failed to click and type. Retrying...`);
-      // await delay(); // Wait a bit before retrying with a random delay
+      await delay(); // Wait a bit before retrying with a random delay
     }
   }
 };
@@ -66,7 +61,7 @@ const retryClearAndType = async (cell, text) => {
     await page.keyboard.up('Control');
     await page.keyboard.press('Backspace'); // Clear the input field
     await page.keyboard.type(text); // Type the new value
-    // await delay(); // Wait for a random delay to ensure input is registered
+    await delay(); // Wait for a random delay to ensure input is registered
   } catch (error) {
     console.log(`Retry attempt failed. Retrying...`);
   }
@@ -93,6 +88,7 @@ const processGrid = async (gridSelector, data) => {
     }
   }
 };
+
 
  // Function to click the "Calculate" button
  const clickCalculateButton = async () => {
@@ -134,7 +130,7 @@ const clickAcceptButton = async () => {
       await page.keyboard.up('Control');
       await page.keyboard.press('Backspace'); // Clear the input field
       await page.keyboard.type(text); // Type the new value
-      // await delay(); // Wait for a random delay to ensure input is registered
+      await delay(); // Wait for a random delay to ensure input is registered
 
       // Verify the value was entered correctly
       const enteredText = await page.evaluate(cell => cell.value.trim(), cell);
@@ -146,10 +142,11 @@ const clickAcceptButton = async () => {
       }
     } catch (error) {
       console.log(`Attempt ${attempt + 1} failed to click and type. Retrying...`);
-      // await delay(); // Wait a bit before retrying with a random delay
+      await delay(); // Wait a bit before retrying with a random delay
     }
   }
 };
+
 
   // Function to click the "Got it!" button for cookies
   const clickGotItButton = async () => {
@@ -165,11 +162,13 @@ const clickAcceptButton = async () => {
       console.error('Failed to click the "Got it!" button for cookies:', error);
     }
   };
-
   // Input data for the Panels grid
   const panelsData = [
     ['600', '200', '1'],
-   
+    ['600', '200', '1'],
+    ['600', '200', '1'],
+    ['600', '200', '1'],
+    ['600', '200', '1']
   ];
 
   // Input data for the Stock sheets grid
@@ -183,8 +182,8 @@ const clickAcceptButton = async () => {
   // Process the Stock sheets grid
   await processGrid('#stock-tiles-grid', stockSheetsData);
 
-  // Click the "Got it!" button for cookies
-  await clickGotItButton();
+    // Click the "Got it!" button for cookies
+    await clickGotItButton();
 
   // Click the Calculate button
   await clickCalculateButton();
@@ -200,6 +199,14 @@ const clickAcceptButton = async () => {
   // Click the Sign In button
   await page.click('button[ng-click="login();"]');
 
+  // Wait for navigation to complete after login
+  // try {
+  //   await page.waitForNavigation({ waitUntil: 'networkidle2' });
+  // } catch (error) {
+  //   console.error('Navigation timed out:', error);
+  // }
+
+ 
   // Wait for 10 seconds
   await new Promise(resolve => setTimeout(resolve, 5000));
 
@@ -212,8 +219,7 @@ const clickAcceptButton = async () => {
   // Click the Accept button
   await clickAcceptButton();
 
-  await page.setViewport(screenSize);
-  
+   await page.setViewport(screenSize);
   // Wait for 20 seconds
   await new Promise(resolve => setTimeout(resolve, 10000));
 
@@ -223,15 +229,6 @@ const clickAcceptButton = async () => {
 
   console.log(`Screenshot taken: ${screenshotPath}`);
 
-  // Upload the screenshot to Cloudinary
-  const result = await cloudinary.uploader.upload(screenshotPath, { folder: 'screenshots' });
-
-  console.log(`Screenshot uploaded to Cloudinary: ${result.secure_url}`);
-
   // Close the browser
   await browser.close();
-
-  // Save the Cloudinary URL
-  const cloudinaryLink = result.secure_url;
-  console.log(`Cloudinary link saved: ${cloudinaryLink}`);
 })();
